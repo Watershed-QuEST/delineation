@@ -1,0 +1,306 @@
+##==============================================================================
+## Project: QuEST
+## Script to calculate subcatchment area using a digital elevation model
+##==============================================================================
+
+##############
+## PACKAGES ##
+##############
+library(tidyverse)
+library(dplyr)
+library(raster)
+library(sf)
+#if using spatial points,
+library(sp)
+library(elevatr)
+library(mapview)
+library(stars)
+library("vroom")
+#whitebox::install_whitebox()
+library(whitebox)
+library(tmaptools)
+library(googledrive)
+
+###############
+## Load data ##
+###############
+#this is a csv file with at least the site name and lat long info for that site
+outlet = read_csv("data/outlet.csv")
+#convert it into bare bones sf
+#tell it where your data is, what the coords are in the df, and the crs (FOR LAT LONG, WGS84)
+outlet = st_as_sf(outlet, coords = c("Lon", "Lat"), 
+                  crs = '+proj=longlat +datum=WGS84 +no_defs')
+
+#reproject to utm 16
+outlet = st_transform(outlet, crs = '+proj=utm +zone=16 +datum=NAD83 +units=m +no_defs') %>% 
+  st_geometry()
+
+###################################
+## Clear folders that we will use ##
+###################################
+# List and delete all files in the folder
+files <- list.files(path = "data_geo", full.names = TRUE)
+file.remove(files)
+
+files <- list.files(path = "temp", full.names = TRUE)
+file.remove(files)
+
+################
+## PULL A DEM ##
+################
+### (digital elevation model) ###
+## DEM - by AJS ##
+pour = as_Spatial(outlet) # make pour points = spatial object
+pour # check dataset
+#convert Spatial Points to sf (simple features)
+pour_sf = st_as_sf(pour) 
+#use the sf object in get_elev_raster
+dem = get_elev_raster(pour_sf, z = 11, clip = "bbox", expand = 18000) # if area getting cut play around with expand number
+res(dem) # resolution in meters
+
+#### If det_elev_raster says: Please connect to the internet and try again ####
+#curl::has_internet()
+# and this is FALSE
+# Try this:
+#assign("has_internet_via_proxy", TRUE, environment(curl::has_internet))
+
+#plot the elevation
+plot(dem)
+
+#save the elevation raster in a folder called temp
+writeRaster(dem, paste0("temp/dem_newmex.tif"), overwrite = T)
+
+#plot with mapview to check
+mapview(dem) + mapview(pour_sf)
+
+############################
+## PREP DEM AND DELINEATE ##
+############################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#Step 1: prep DEM and delineate
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#1.1 write DEM and outlet to temp
+#1.2 fill cell pits
+#1.3 breach depressions
+#1.4 write flow direction raster
+#1.5.2 write flow accumulation raster
+#1.5.2 write stream layer
+#1.6 snap pour point
+#1.7 delineate
+#1.8 read back into main
+#1.9 convert to polygons
+
+#whitebox functions do not work just using project directory, so you have to set the working directory
+#we are using all the files that are stored in the temp directory, so:
+getwd()
+#copy and paste that directory if that's where you are working from and make it a temp
+temp <- "/Users/manuelalondono/Documents/QuEST/synoptics"
+
+# These next lines are pre-processing steps in digital elevation model (DEM) - they are creating intermediate files
+#1.1 -----
+#Prepares the DEM and delineates the watershed through a series of steps:
+writeRaster(dem, paste0("temp/demNM.tif"), overwrite = T)
+st_write(outlet, paste0("temp/outlet_newmex.shp"), delete_layer = T)
+
+#1.2 -----
+#Fills single-cell pits (small depressions or pits in the elevation data are filled in)
+wbt_fill_single_cell_pits(
+  dem = "temp/demNM.tif",
+  output = "temp/dem_newmex_fill.tif",
+  wd = temp)
+
+#1.3 -----
+#Breaches depressions (remove artificial depressions or flat areas in the elevation data)
+wbt_breach_depressions(
+  dem = "temp/dem_newmex_fill.tif",
+  output = "temp/dem_newmex_breach.tif",
+  wd = temp)
+
+
+#1.4 -----
+#Assigns flow direction
+wbt_d8_pointer(
+  dem = "temp/dem_newmex_breach.tif",
+  output = "temp/flowdir_newmex.tif",
+  wd = temp)
+
+
+#1.5 -----
+#Computes flow accumulation
+wbt_d8_flow_accumulation(
+  input = "temp/dem_newmex_breach.tif",
+  #you have to use the DEM not the flow direction for some reason
+  output = "temp/flowaccum_newmex.tif",
+  wd = temp
+)
+
+#1.6 -----
+#Snaps pour points to the nearest flow path 
+wbt_snap_pour_points(
+  pour_pts = "temp/outlet_newmex.shp",
+  flow_accum = "temp/flowaccum_newmex.tif",
+  snap_dist = 50,
+  output = "temp/snap_pour_newmex.shp",
+  wd = temp
+)
+
+###+++++ AJW code added to check that snapped pour point is on the correct flow accumulation stream ++++++++###
+# NOTE: The pour point MUST be on the right flow accumulation stream for the watershed to delineate correctly. 
+#If the point is not on the correct stream after snapping, the only way to fix it is to play around with moving the lat/lon closer to the target stream, 
+#then editing the lat/lon into the lat/lon csv, then rerunning the code to this point and checking that it got on the right stream, then delineating. 
+#You can also try changing the snap_dist in the snapping function, but that won't work if the point isn't closer to the right stream 
+#(it will likely end up on a different stream, or get stuck in non-stream land).
+
+#read stream raster
+streams <- raster("temp/flowaccum_newmex.tif") #flow accumulation, indicating the number of cells that contribute flow to each cell in the landscape.
+#filter out low-flow areas or noise in the flow accumulation raster
+#streams[streams<20] <- NA #THIS VALUE IS SOMETHING YOU PLAY AROUND WITH; there's no one answer
+#writes the modified streams raster to a new raster
+#writeRaster(streams, paste0("temp/cropped_streams_newmex.tif"), overwrite=T)
+
+#now use the new WBT functions to extract the streams!
+wbt_extract_streams(
+  flow_accum = "temp/flowaccum_newmex.tif",
+  output = "temp/streams_newmex.tif",
+  threshold = 50,
+  wd = temp
+)
+
+wbt_raster_streams_to_vector(
+  streams = "temp/streams_newmex.tif",
+  d8_pntr = "temp/flowdir_newmex.tif",
+  output = "temp/streams_newmex.shp",
+  wd = temp
+)
+
+#input into R 
+#read shapefile containing stream data
+streams <- st_read(paste0("temp/streams_newmex.shp"))
+#assigns the coordinate reference system (CRS) of the stream data to match DEM system
+st_crs(streams) <- st_crs(dem)
+plot(streams)
+
+#input snapped pour pt
+pour_pt_snap <- st_read(paste0("temp/snap_pour_newmex.shp"))
+#assigns the coordinate reference system (CRS) of the stream data to match DEM system
+st_crs(pour_pt_snap) <- st_crs(dem)
+
+#### check if points are on stream
+mapview(dem, maxpixels = 742182) + 
+  mapview(streams) + mapview(pour_sf) + mapview(pour_pt_snap, color="red")
+
+###+++++ end AJW code added to check that snapped pour point is on the correct flow accumulation stream ++++++++###
+
+#1.7 -----
+#Delineates the watershed 
+wbt_watershed(
+  d8_pntr = "temp/flowdir_newmex.tif",
+  pour_pts = "temp/snap_pour_newmex.shp",
+  output = "temp/shed_newmex.tif",
+  wd = temp
+)
+
+#1.8 -----
+#be sure your watershed shapefile is pulled in so we can use polygon area to get WS area
+newmex_ws <- raster(paste0("temp/shed_newmex.tif"))
+
+mapview(newmex_ws, maxpixels =  2970452)
+
+#1.9 -----
+#converts newmex_ws into a stars object, it is a multi-dimensional array that represents raster data.
+newmex_ws <- st_as_stars(newmex_ws) %>% st_as_sf(merge=T) #it says to skip but it works with this one
+
+#plots watershed shapefile
+mapview(newmex_ws)
+#writes shapefile to data folder
+st_write(newmex_ws, paste0("data_geo/site.shp"), delete_layer = T)
+
+#plots dem raster with newmex shapefile
+mapview(newmex_ws) + mapview(dem) + mapview(pour_sf)
+
+################################
+## Crop the DEM and run again ##
+################################
+#read the shape file defining the extent to crop the DEM
+crop_extent <- st_read("data_geo/site.shp")
+#crop the DEM to the specified extent
+cropped_DEM <- raster::crop(dem, crop_extent)
+
+#plotting
+plot(cropped_DEM)
+plot(newmex_ws, add = TRUE)
+
+#Run the entire WBT series again to try making streams off of the smaller DEM
+writeRaster(cropped_DEM, paste0("temp/cropped_dem_newmex.tif"), overwrite=T)
+#didn't change
+wbt_fill_single_cell_pits(
+  dem = "temp/cropped_dem_newmex.tif",
+  output = "temp/cropped_dem_newmex_fill.tif",
+  wd = temp)
+
+wbt_breach_depressions(
+  dem = "temp/cropped_dem_newmex_fill.tif",
+  output = "temp/cropped_dem_newmex_breach.tif",
+  wd = temp)
+
+wbt_d8_pointer(
+  dem = "temp/cropped_dem_newmex_breach.tif",
+  output = "temp/cropped_flowdir_newmex.tif",
+  wd = temp)
+
+wbt_d8_flow_accumulation(
+  input = "temp/cropped_dem_newmex_breach.tif",
+  output = "temp/cropped_flowaccum_newmex.tif",
+  wd = temp
+)
+
+#### Rerun with cropped streams ####
+#read stream raster
+streams <- raster(paste0("temp/cropped_flowaccum_newmex.tif")) #flow accumulation, indicating the number of cells that contribute flow to each cell in the landscape.
+#filter out low-flow areas or noise in the flow accumulation raster
+#streams[streams<20] <- NA #THIS VALUE IS SOMETHING YOU PLAY AROUND WITH; there's no one answer
+#writes the modified streams raster to a new raster
+#writeRaster(streams, paste0("temp/cropped_streams_newmex.tif"), overwrite=T)
+
+#now use the new WBT functions to extract the streams!
+wbt_extract_streams(
+  flow_accum = "temp/cropped_flowaccum_newmex.tif",
+  output = "temp/cropped_streams_newmex.tif",
+  threshold = 50,
+  wd = temp
+)
+
+wbt_raster_streams_to_vector(
+  streams = "temp/cropped_streams_newmex.tif",
+  d8_pntr = "temp/cropped_flowdir_newmex.tif",
+  output = "temp/cropped_streams_newmex.shp",
+  wd = temp
+)
+
+#input into R 
+#read shapefile containing stream data
+streams <- st_read(paste0("temp/cropped_streams_newmex.shp"))
+#assigns the coordinate reference system (CRS) of the stream data to match DEM system
+st_crs(streams) <- st_crs(cropped_DEM)
+#crop to the watershed
+streams <- streams[newmex_ws,]
+plot(streams)
+
+#### check if points are on stream
+mapview(dem, maxpixels = 742182) + mapview(newmex_ws) + 
+  mapview(streams) + mapview(pour_sf) 
+
+#export all of these so we have them!
+st_write(newmex_ws, paste0("data_geo/area.shp"), delete_layer = T)
+st_write(streams, paste0("data_geo/area_stream_network.shp"), delete_layer = T)
+writeRaster(cropped_DEM, paste0("data_geo/croppedDEM_area.tif"), overwrite=T)
+
+#GET THE AREA OF YOUR WATERSHED POLYGONS (it has to be in sf format)
+sum(st_area(newmex_ws))
+
+#Check area is ok with flowdir
+flowdir = raster('temp/flowdir_newmex.tif')
+plot(flowdir) + plot(streams)
+mapview(flowdir)+mapview(streams)+mapview(pour_sf)+mapview(newmex_ws)
+
+
