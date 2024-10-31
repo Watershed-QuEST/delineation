@@ -14,9 +14,9 @@ library(rgdal) # For KML/KMZ support
 #########################
 
 # List of folder names
-folder_names <- c("DVO", "DVSB1", "DVSB2", "DVMS1", "DVMS2", "DVMS3", "DVMS4", 
-                  "DVMS5", "DVMS6", "DVET", "DVNWT1", "DVNWT2", "DVNWT3", 
-                  "DVNWT4", "DVNWT5", "DVWT1", "DVWT2", "DVWT3", "DVWT4", "DVWT5")
+folder_names <- c("BRM01", "BRMQ1", "BRAA1", "BRA01", "BRM02", "BRAB1", "BRB01", "BRM03", 
+                  "BRMQ3", "BRM04", "BRCD1", "BRMQ4", "BRD01", "BRE01", "BRM05", "BRF01",
+                  "BRM06", "BRM07", "BRC01", "BRA02")
 
 # Create an empty list to store the shapefiles
 areas_list <- list()
@@ -24,7 +24,7 @@ areas_list <- list()
 # Loop through each folder name in the list
 for (folder in folder_names) {
   # Construct the file path
-  folder_path <- paste0("areas_DV/", folder, "/area.shp")
+  folder_path <- paste0("areas_BR/", folder, "/area.shp")
   
   # Check if the shapefile exists in the folder before loading
   if (file.exists(folder_path)) {
@@ -44,8 +44,6 @@ all_areas <- do.call(rbind, areas_list)
 ##############################
 
 #### THIS WILL SAVE THE KMLS TO YOUR FILES SO SPECIFY WHERE YOU WANT THEM ####
-# Specify the directory where you want to save the KML files
-output_dir <- "Dogvalley_basins/KML"
 
 # Create an empty list to store KML areas
 areas_kml <- list()
@@ -73,7 +71,7 @@ for (i in seq_along(areas_list)) {
 #### IF OU ONLY NEED TO DO ONE ####
 ###################################
 # # Load the shapefile
-# polygon_sf <- st_read("SandyC_basins/SandyC_basinsL.shp")
+# polygon_sf <- st_read("areas_NH/CTB/area.shp")
 # 
 # # Write to KML
 # st_write(polygon_sf, "polygon.kml", driver = "KML")

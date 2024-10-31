@@ -55,7 +55,7 @@ pour # check dataset
 #convert Spatial Points to sf (simple features)
 pour_sf = st_as_sf(pour) 
 #use the sf object in get_elev_raster
-dem = get_elev_raster(pour_sf, z = 11, clip = "bbox", expand = 18000) # if area getting cut play around with expand number
+dem = get_elev_raster(pour_sf, z = 12, clip = "bbox", expand = 18000) # if area getting cut play around with expand number
 res(dem) # resolution in meters
 
 #### If det_elev_raster says: Please connect to the internet and try again ####
@@ -302,5 +302,6 @@ sum(st_area(newmex_ws))
 flowdir = raster('temp/flowdir_newmex.tif')
 plot(flowdir) + plot(streams)
 mapview(flowdir)+mapview(streams)+mapview(pour_sf)+mapview(newmex_ws)
+
 
 
