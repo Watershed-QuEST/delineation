@@ -3,29 +3,16 @@
 ## Script to compare plot Dog Valley's areas
 ##==============================================================================
 
-##############
-## Packages ##
-##############
+##################
+#### Packages ####
+##################
 
 library(dplyr)
-# remotes::install_github('r-tmap/tmap')
-library(tmap)
 library(sf)
-# if using spatial points,
 library(sp)
-# for color palettes
-library(viridis)
-library(paletteer)
-# for plotting with ggplot
-library(extrafont)
 library(ggplot2)
 library(ggspatial)
-library(patchwork)
-library(scico)
-#library(vapoRwave)
-library(tidyverse)
-library(tibble)
-#google drive
+library(plotly)
 library(googledrive) 
 library(googlesheets4)
 

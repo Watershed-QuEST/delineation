@@ -3,28 +3,18 @@
 ## Script to compare leverage with and without Q in NM
 ##==============================================================================
 
-##############
-## Packages ##
-##############
+##################
+#### Packages ####
+##################
 
-library(mapview)
 library(dplyr)
-# remotes::install_github('r-tmap/tmap')
-library(tmap)
 library(sf)
-# if using spatial points,
 library(sp)
-# for color palettes
-library(viridis)
-library(paletteer)
-# for plotting with ggplot
-library(extrafont)
 library(ggplot2)
 library(ggspatial)
-library(patchwork)
-library(scico)
-#library(vapoRwave)
-library(tidyverse)
+library(plotly)
+library(googledrive) 
+library(googlesheets4)
 
 
 ###############
@@ -97,6 +87,57 @@ ggplot() +
   geom_sf(data = streams, color = "blue") +
   theme_minimal() +
   theme(legend.position = "right")  # Adjust legend position as needed
+
+# Plot areas with the streams
+ggplot() +
+  geom_sf(data = all_areas, aes(fill = Area_ID), alpha = 0.5) +  # Plot polygons with transparency
+  labs(title = "Santa Fe Watershed", fill = "Area ID") +  # Add title and legend label
+  geom_sf(data = NMsites_sf, aes(fill = Site), color = "black", shape = 21, size = 3) +  # Plot points from DVsites
+  geom_sf_text(data = NMsites_sf, aes(label = Site), size = 4, vjust = -1, color = "black") +  # Add text labels for Site IDs
+  geom_sf(data = streams, color = "blue", alpha = 0.3) +
+  theme_minimal() +
+  theme(legend.position = "right")  # Adjust legend position
+
+
+#####################################################
+#### Load latitudes and longitutes vor watershed ####
+#####################################################
+
+## Load site data
+sites <- drive_get("https://docs.google.com/spreadsheets/d/1j5p29rslgqH6VpyjcZJ0-qPUaECY-9VW4YKDWdc_sro/edit?gid=0#gid=0")
+# Download the file as a csv file
+drive_download(as_id(sites$id), path = "data/sites.csv", type = "csv", overwrite = T)
+# Fetch the file
+sites <- read.csv("data/sites.csv")
+
+# Ensure both datasets use the same CRS
+# Check the CRS of all_areas
+crs_all_areas <- st_crs(all_areas)
+
+# Make NM only data set
+NMsites <- sites %>%
+  filter(Code == "NM")
+
+# Remove some sites that we don't want
+NMsites <- NMsites %>%
+  filter(Site != "USF31")
+
+# Convert NMsites to an sf object
+NMsites_sf <- st_as_sf(NMsites, coords = c("Lon", "Lat"), crs = 4326)  # Assuming Lon/Lat are in WGS84
+NMsites_sf <- st_transform(NMsites_sf, crs = st_crs(all_areas))  # Transform to match CRS of all_areas
+
+# Extract coordinates from NHsites_sf
+NMsites_sf <- cbind(NMsites_sf, st_coordinates(NMsites_sf))
+
+# Plot both datasets with coord_sf()
+ggplot() +
+  geom_sf(data = all_areas, aes(fill = Area_ID), alpha = 0.5) +  # Plot polygons with transparency
+  labs(title = "Santa Fe Watershed", fill = "Area ID") +  # Add title and legend label
+  geom_sf(data = NMsites_sf, aes(fill = Site), color = "black", shape = 21, size = 3) +  # Plot points from DVsites
+  geom_sf_text(data = NMsites_sf, aes(label = Site), size = 4, vjust = -1, color = "black") +  # Add text labels for Site IDs
+  theme_minimal() +
+  theme(legend.position = "right")  # Adjust legend position
+
 
 ##################
 #### Leverage ####

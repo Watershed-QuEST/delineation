@@ -74,11 +74,11 @@ for (i in seq_along(areas_list)) {
 ###################################
 #### IF OU ONLY NEED TO DO ONE ####
 ###################################
-# # Load the shapefile
-# polygon_sf <- st_read("areas_NH/CTB/area.shp")
+# # Load the shape file
+polygon_sf <- st_read("areas_NH/NBR-up/area.shp")
 # 
 # # Write to KML
-# st_write(polygon_sf, "polygon.kml", driver = "KML")
+st_write(polygon_sf, "polygon.kml", driver = "KML")
 # 
 # # Create a KMZ by zipping the KML file
 # zip("polygon.kmz", "polygon.kml")

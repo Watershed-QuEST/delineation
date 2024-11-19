@@ -1,6 +1,6 @@
 ##==============================================================================
 ## Project: QuEST
-## Script to compare plot Dog Valley's areas
+## Script to plot Lamprey's watershed
 ##==============================================================================
 
 ##################
@@ -91,7 +91,6 @@ drive_download(as_id(sites$id), path = "data/sites.csv", type = "csv", overwrite
 sites <- read.csv("data/sites.csv")
 
 # Remove LMP72 (not part of watershed)
-# Make DV only data set
 sites <- sites %>%
   filter(SiteSub_ProjectB != "LMP72")
 
@@ -100,7 +99,7 @@ sites <- sites %>%
 sites <- sites %>% rename(Site = SiteSub_ProjectB)
 sites <- sites %>% rename(area = Area..m2.)
 
-# Make DV only data set
+# Make NH only data set
 NHsites <- sites %>%
   filter(Code == "NH")
  
@@ -108,7 +107,7 @@ NHsites <- sites %>%
 # Check the CRS of all_areas
 crs_all_areas <- st_crs(all_areas)
 
-# Convert DVsites to an sf object
+# Convert NMsites to an sf object
 NHsites_sf <- st_as_sf(NHsites, coords = c("Longitude", "Latitude"), crs = 4326)  # Assuming Lon/Lat are in WGS84
 NHsites_sf <- st_transform(NHsites_sf, crs = st_crs(all_areas))  # Transform to match CRS of all_areas
 

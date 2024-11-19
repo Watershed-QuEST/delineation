@@ -99,7 +99,7 @@ sites <- sites %>% rename(area = Area.m2)
 BRsites <- sites %>%
   filter(Code == "BR")
 
-# Ensure both datasets use the same CRS
+      # Ensure both datasets use the same CRS
 # Check the CRS of all_areas
 crs_all_areas <- st_crs(all_areas)
 
@@ -229,3 +229,4 @@ interactive_plot <- ggplotly(p)
 
 # Render
 interactive_plot
+

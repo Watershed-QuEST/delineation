@@ -55,7 +55,7 @@ pour # check dataset
 #convert Spatial Points to sf (simple features)
 pour_sf = st_as_sf(pour) 
 #use the sf object in get_elev_raster
-dem = get_elev_raster(pour_sf, z = 12, clip = "bbox", expand = 18000) # if area getting cut play around with expand number
+dem = get_elev_raster(pour_sf, z = 9, clip = "bbox", expand = 18000) # if area getting cut play around with expand number
 res(dem) # resolution in meters
 
 #### If det_elev_raster says: Please connect to the internet and try again ####
@@ -186,8 +186,9 @@ pour_pt_snap <- st_read(paste0("temp/snap_pour_newmex.shp"))
 st_crs(pour_pt_snap) <- st_crs(dem)
 
 #### check if points are on stream
-mapview(dem, maxpixels = 742182) + 
+mapview(dem) + 
   mapview(streams) + mapview(pour_sf) + mapview(pour_pt_snap, color="red")
+
 
 ###+++++ end AJW code added to check that snapped pour point is on the correct flow accumulation stream ++++++++###
 
@@ -204,7 +205,7 @@ wbt_watershed(
 #be sure your watershed shapefile is pulled in so we can use polygon area to get WS area
 newmex_ws <- raster(paste0("temp/shed_newmex.tif"))
 
-mapview(newmex_ws, maxpixels =  2970452)
+mapview(newmex_ws)
 
 #1.9 -----
 #converts newmex_ws into a stars object, it is a multi-dimensional array that represents raster data.
