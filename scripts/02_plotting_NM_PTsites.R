@@ -117,8 +117,8 @@ ggplot() +
   geom_sf(data = all_areas, aes(fill = Area_ID), alpha = 0.3) +
   labs(title = "Santa Fe Watershed - PT locations", fill = "Site") +
   scale_fill_manual(values = pal) +
-  geom_sf(data = PT, size = 3, shape = 21, fill = "black") +
   geom_sf(data = streams, color = "#5586B3") +
+  geom_sf(data = PT, size = 4, shape = 21, fill = "black") +
   theme_minimal()
 
 # Can't get to not plot the areas in the legend if you want them with color... sorry
