@@ -106,7 +106,7 @@ ggplot() +
 pt <- read.csv("data/NM_PT.csv")
 
 # Choose colors for maps. PLAY WITH THIS!
-pal <- paletteer_c("ggthemes::Temperature Diverging", 30)
+pal <- paletteer_c("ggthemes::Green-Blue-White Diverging", 30)
 pal <- paletteer_c("ggthemes::Green", 43)
 
 #transform lat lon to geometries
@@ -117,7 +117,7 @@ ggplot() +
   geom_sf(data = all_areas, aes(fill = Area_ID), alpha = 0.3) +
   labs(title = "Santa Fe Watershed - PT locations", fill = "Site") +
   scale_fill_manual(values = pal) +
-  geom_sf(data = PT, size = 2, shape = 21, fill = "black") +
+  geom_sf(data = PT, size = 3, shape = 21, fill = "black") +
   geom_sf(data = streams, color = "#5586B3") +
   theme_minimal()
 
