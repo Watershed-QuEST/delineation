@@ -140,3 +140,27 @@ ggplot() +
   
   # Minimal theme
   theme_minimal()
+
+########################
+#### scan locations ####
+########################
+
+# Load leverage data
+pt <- read.csv("data/NM_scans.csv")
+
+# Choose colors for maps. PLAY WITH THIS!
+pal <- paletteer_c("ggthemes::Green-Blue-White Diverging", 30)
+pal <- paletteer_c("ggthemes::Green", 43)
+
+#transform lat lon to geometries
+PT <- st_as_sf(pt, coords = c("Lon", "Lat"), crs = '+proj=longlat +datum=WGS84 +no_defs')
+
+# Plot the areas with PT sites
+ggplot() +
+  geom_sf(data = all_areas, aes(fill = Area_ID), alpha = 0.3) +
+  labs(title = "Santa Fe Watershed - scan locations", fill = "Site") +
+  scale_fill_manual(values = pal) +
+  geom_sf(data = streams, color = "#5586B3") +
+  geom_sf(data = PT, size = 4, shape = 21, fill = "red") +
+  theme_minimal()
+
