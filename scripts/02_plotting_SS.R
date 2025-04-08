@@ -86,11 +86,11 @@ ggplot() +
 
 ## Load site data
 sites <- drive_get("https://docs.google.com/spreadsheets/d/1j5p29rslgqH6VpyjcZJ0-qPUaECY-9VW4YKDWdc_sro/edit?gid=0#gid=0")
+3
 # Download the file as a csv file
 drive_download(as_id(sites$id), path = "data/sites.csv", type = "csv", overwrite = T)
 # Fetch the file
 sites <- read.csv("data/sites.csv")
-
 
 # Rename some columns
 sites <- sites %>% rename(area = Area.m2)

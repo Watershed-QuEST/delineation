@@ -21,9 +21,9 @@ library(whitebox)
 library(tmaptools)
 library(googledrive)
 
-###############
-## Load data ##
-###############
+###################
+#### Load data ####
+###################
 #this is a csv file with at least the site name and lat long info for that site
 outlet = read_csv("data/outlet.csv")
 #convert it into bare bones sf
@@ -35,19 +35,19 @@ outlet = st_as_sf(outlet, coords = c("Lon", "Lat"),
 outlet = st_transform(outlet, crs = '+proj=utm +zone=16 +datum=NAD83 +units=m +no_defs') %>% 
   st_geometry()
 
-###################################
-## Clear folders that we will use ##
-###################################
-# List and delete all files in the folder
+########################################
+#### Clear folders that we will use ####
+########################################
+# list and delete all files in the folder
 files <- list.files(path = "data_geo", full.names = TRUE)
 file.remove(files)
 
 files <- list.files(path = "temp", full.names = TRUE)
 file.remove(files)
 
-################
-## PULL A DEM ##
-################
+####################
+#### PULL A DEM ####
+####################
 ### (digital elevation model) ###
 ## DEM - by AJS ##
 pour = as_Spatial(outlet) # make pour points = spatial object
@@ -58,11 +58,11 @@ pour_sf = st_as_sf(pour)
 dem = get_elev_raster(pour_sf, z = 9, clip = "bbox", expand = 18000) # if area getting cut play around with expand number
 res(dem) # resolution in meters
 
-#### If det_elev_raster says: Please connect to the internet and try again ####
-#curl::has_internet()
+#### if det_elev_raster says: Please connect to the internet and try again ####
+# curl::has_internet()
 # and this is FALSE
 # Try this:
-#assign("has_internet_via_proxy", TRUE, environment(curl::has_internet))
+# assign("has_internet_via_proxy", TRUE, environment(curl::has_internet))
 
 #plot the elevation
 plot(dem)
@@ -96,7 +96,7 @@ getwd()
 #copy and paste that directory if that's where you are working from and make it a temp
 temp <- "/Users/manuelalondono/Documents/QuEST/synoptics"
 
-# These next lines are pre-processing steps in digital elevation model (DEM) - they are creating intermediate files
+# these next lines are pre-processing steps in digital elevation model (DEM) - they are creating intermediate files
 #1.1 -----
 #Prepares the DEM and delineates the watershed through a series of steps:
 writeRaster(dem, paste0("temp/demNM.tif"), overwrite = T)
