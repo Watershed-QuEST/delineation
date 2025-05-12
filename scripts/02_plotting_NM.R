@@ -14,6 +14,10 @@ library(ggspatial)
 library(plotly)
 library(googledrive) 
 library(googlesheets4)
+library(viridis)
+library(ggthemes) # theme_map()
+library(terra)
+library(raster)
 
 ###############
 #### Areas ####
@@ -101,9 +105,10 @@ ggplot() +
 #####################################################
 ## load site data
 sites <- drive_get("https://docs.google.com/spreadsheets/d/1j5p29rslgqH6VpyjcZJ0-qPUaECY-9VW4YKDWdc_sro/edit?gid=0#gid=0")
+3
 # download the file as a csv file
 drive_download(as_id(sites$id), path = "data/sites.csv", type = "csv", overwrite = T)
-# Fetch the file
+# fetch the file
 sites <- read.csv("data/sites.csv")
 
 # ensure both datasets use the same CRS
@@ -133,7 +138,6 @@ ggplot() +
   geom_sf_text(data = NMsites_sf, aes(label = Site), size = 4, vjust = -1, color = "black") +  # add text labels for Site IDs
   theme_minimal() +
   theme(legend.position = "right")  # adjust legend position
-
 
 ##################
 #### Leverage ####
@@ -349,5 +353,192 @@ ggplot() +
   
   theme_minimal()
 
+#########################
+#### plot USA and NM ####
+#########################
+library(raster)
+USA <- st_read("USA_adm/USA_adm2.shp")
+USA1 <- st_read("USA_adm/USA_adm1.shp")
+elevation_raster <- try(raster::raster("elevation_nm/SFWmuniDEM_meters.tif"), silent = TRUE)
 
+## filter USA shapefile for just NM
+NM <- USA1 %>%
+  filter(NAME_1 == "New Mexico")
 
+# plot NM
+ggplot() +
+  geom_sf(data = NM) +  
+  geom_sf(data = all_areas, aes(fill = Area_ID), color = "#2172B5") +
+  theme_minimal()
+
+# Santa Fe & Abq coords
+city <- data.frame(
+  type = c("santafe", "albuquerque"),
+  long = c(35.6894, 35.0844),
+  lat = c(-105.9382, -106.6504)
+)  
+
+# Santa Fe coords
+city <- data.frame(
+  type = c("santafe"),
+  long = c(35.6894),
+  lat = c(-105.9382)
+)  
+
+# convert lat/long to a sf
+city_sf <- city %>%
+  st_as_sf(coords = c( "lat","long"), crs=4326)
+
+city_sf_t <- st_transform(city_sf, crs=2163)
+
+# plot NM with watershed and cities
+ggplot() +
+  geom_sf(data = NM) +  
+  geom_sf(data = all_areas, aes(fill = Area_ID), color = "#367bb4ff") +
+  geom_sf(data = city_sf, size = 6, color = "#367bb4ff") +
+  theme_minimal()
+
+# coordinates
+raster_crs <- raster::crs(elevation_raster)
+shapefile_crs <- sf::st_crs(NM)
+
+# clip the raster to the extent of the NM shapefile
+clipped_raster <- raster::crop(elevation_raster, NM)
+clipped_raster <- raster::mask(clipped_raster, NM)
+
+# if they are different, choose one CRS and reproject:
+# for example, to re project NM to the raster's CRS:
+NM_reprojected <- sf::st_transform(NM, crs = raster::crs(elevation_raster))
+clipped_raster <- raster::crop(elevation_raster, NM_reprojected)
+
+# try again. clip the raster to the extent of the NM shapefile
+clipped_raster <- raster::crop(elevation_raster, NM_reprojected)
+clipped_raster <- raster::mask(clipped_raster, NM_reprojected)
+
+# plot the clipped raster with the shape file boundary
+ggplot() +
+  geom_sf(data = NM, fill = NA, color = "black", linewidth = 1) +
+  geom_raster(data = as.data.frame(raster::rasterToPoints(clipped_raster)),
+              aes(x = x, y = y, fill = SFWmuniDEM_meters)) +
+  scale_fill_viridis(name = "Elevation") + 
+  coord_sf(crs = raster::crs(clipped_raster)) + # Ensure correct coordinate system for plotting
+  labs(title = "Elevation within Area of Interest",
+       x = "Longitude",
+       y = "Latitude") +
+  theme_minimal()
+
+#############################
+#### plot just for USF12 ####
+#############################
+# fix data for plotting
+# call raster data again
+elevation_raster <- try(raster::raster("elevation_nm/SFWmuniDEM_meters.tif"), silent = TRUE)
+
+# just USF12
+USF12 <- all_areas %>%
+  filter(Area_ID == "12")
+
+# coordinates
+raster_crs <- raster::crs(elevation_raster)
+shapefile_crs <- sf::st_crs(USF12)
+
+# clip the raster to the extent of the watershed shape file
+clipped_raster <- raster::crop(elevation_raster, USF12)
+clipped_raster <- raster::mask(clipped_raster, USF12)
+
+# if they are different, choose one CRS and reproject:
+# for example, to re project USF12 to the raster's CRS:
+USF12_reprojected <- sf::st_transform(USF12, crs = raster::crs(elevation_raster))
+clipped_raster <- raster::crop(elevation_raster, USF12_reprojected)
+
+# clip the raster to the extent of the watershed shape file
+clipped_raster <- raster::crop(elevation_raster, USF12_reprojected)
+clipped_raster <- raster::mask(clipped_raster, USF12_reprojected)
+
+# plot the clipped raster with the shape file boundary
+ggplot() +
+  geom_sf(data = USF12, fill = NA, color = "black", linewidth = 1) +
+  geom_raster(data = as.data.frame(raster::rasterToPoints(clipped_raster)),
+              aes(x = x, y = y, fill = SFWmuniDEM_meters)) +
+  scale_fill_viridis(name = "Elevation") + 
+  coord_sf(crs = raster::crs(clipped_raster)) + # ensure correct coordinate system for plotting
+  labs(title = "Elevation in Santa Fe Watershed",
+       x = "Longitude",
+       y = "Latitude") +
+  theme_minimal()
+
+################################
+#### Adding sampling points ####
+################################
+# load sampling and PT sites
+pt <- read.csv("data/NM_PT.csv")
+#transform PT lat lon to geometries
+PT <- st_as_sf(pt, coords = c("Lon", "Lat"), crs = '+proj=longlat +datum=WGS84 +no_defs')
+PT_reprojected <- sf::st_transform(PT, crs = raster::crs(clipped_raster))
+pt_crs <- sf::st_crs(PT_reprojected)
+
+# load streams
+streams <- st_read("areas_NM/USF12/area_stream_network.shp")
+#transform streams lat lon to geometries
+stream_reprojected <- sf::st_transform(streams, crs = raster::crs(clipped_raster))
+pt_crs <- sf::st_crs(stream_reprojected)
+
+ggplot() +
+  geom_raster(data = as.data.frame(raster::rasterToPoints(clipped_raster)),
+              aes(x = x, y = y, fill = SFWmuniDEM_meters)) +
+  scale_fill_viridis(name = "Elevation") +
+  geom_sf(data = USF12, fill = NA, color = "black", linewidth = 0.5) +  # plot shapefile *after* raster
+  coord_sf(crs = raster::crs(clipped_raster)) +
+  labs(title = "Elevation in Santa Fe Watershed",
+       x = "Longitude",
+       y = "Latitude") +
+  geom_sf(data = stream_reprojected, color = "#5586B3") +
+  geom_sf(data = PT_reprojected, size = 4, shape = 21, fill = "gray") +
+  theme_minimal()
+
+# trouble shooting when different projections or extent of areas
+sf::st_crs(PT_reprojected)
+raster::crs(clipped_raster)
+sf::st_crs(stream_reprojected)
+
+head(PT_reprojected)
+head(stream_reprojected)
+raster::extent(clipped_raster)
+sf::st_bbox(USF12_reprojected) # also look at the extent of your area of interest
+
+ggplot() +
+  geom_raster(data = as.data.frame(raster::rasterToPoints(clipped_raster)),
+              aes(x = x, y = y, fill = SFWmuniDEM_meters)) +
+  scale_fill_viridis(name = "Elevation") +
+  coord_sf(crs = raster::crs(clipped_raster)) +
+  geom_sf(data = PT_reprojected, size = 4, shape = 21, fill = "gray") +
+  theme_minimal()
+
+ggplot() +
+  geom_raster(data = as.data.frame(raster::rasterToPoints(clipped_raster)),
+              aes(x = x, y = y, fill = SFWmuniDEM_meters)) +
+  scale_fill_viridis(name = "Elevation") +
+  coord_sf(crs = raster::crs(clipped_raster)) +
+  geom_sf(data = stream_reprojected, color = "#5586B3") +
+  theme_minimal()
+
+ggplot() +
+  # Raster layer
+  geom_raster(data = as.data.frame(raster::rasterToPoints(clipped_raster)),
+              aes(x = x, y = y, fill = SFWmuniDEM_meters)) +
+  scale_fill_viridis(name = "Elevation") +
+  # Shapefile boundary
+  geom_sf(data = USF12, fill = NA, color = "black", linewidth = 0.5) +
+  # Stream lines
+  geom_sf(data = stream_reprojected, color = "#5586B3") +
+  # Point sites
+  geom_sf(data = PT_reprojected, size = 4, shape = 21, fill = "gray") +
+  # Coordinate system
+  coord_sf(crs = raster::crs(clipped_raster)) +
+  # Labels and title
+  labs(title = "Elevation in Santa Fe Watershed with Sampling Sites and Streams",
+       x = "Easting (m)", # Be more explicit with UTM units
+       y = "Northing (m)") +
+  # Theme
+  theme_minimal()
+           

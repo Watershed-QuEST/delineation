@@ -142,7 +142,7 @@ ggplot() +
 ########################
 # only scan catchments
 scan_areas <- all_areas[c("area12", "area20", "area21"),]
-# load leverage data
+# load scan sites
 pt <- read.csv("data/NM_scans.csv")
 
 # choose colors for maps. PLAY WITH THIS!
@@ -156,7 +156,7 @@ PT <- st_as_sf(pt, coords = c("Lon", "Lat"), crs = '+proj=longlat +datum=WGS84 +
 ggplot() +
   geom_sf(data = scan_areas, aes(fill = Area_ID), alpha = 0.4) +
   labs(title = "Santa Fe Watershed - scan locations", fill = "Site") +
-  scale_fill_manual(values = pal) +
+  #scale_fill_manual(values = pal) +
   geom_sf(data = streams, color = "#5586B3") +
   geom_sf(data = PT, size = 4, shape = 21, fill = "red") +
   theme_minimal()
@@ -181,3 +181,14 @@ ggplot() +
                                               labels = c("USF12" = "Lower", "USF20" = "Middle", "USF21" = "Upper")) +
   theme_minimal()
 
+# can I get both colored?
+ggplot() +
+  geom_sf(data = scan_areas, aes(color = Area_ID), alpha = 0.6) +
+  labs(title = "Santa Fe Watershed - scan locations") + 
+  scale_color_manual(name = "Site Area", values = c("12" = "#FDE725", "20" = "#2B833E", "21" = "#440154"), 
+                    labels = c("12" = "Lower", "20" = "Middle", "21" = "Upper")) +
+  geom_sf(data = streams, color = "#5586B3") +
+  geom_sf(data = PT, aes(fill = Site), size = 4, shape = 21) +
+  scale_fill_manual(name = "Site", values = c("USF12" = "#FDE725", "USF20" = "#2B833E", "USF21" = "#440154"), 
+                    labels = c("USF12" = "Lower", "USF20" = "Middle", "USF21" = "Upper")) +
+  theme_minimal()
