@@ -420,7 +420,7 @@ ggplot() +
   geom_sf(data = NM, fill = NA, color = "black", linewidth = 1) +
   geom_raster(data = as.data.frame(raster::rasterToPoints(clipped_raster)),
               aes(x = x, y = y, fill = SFWmuniDEM_meters)) +
-  scale_fill_viridis(name = "Elevation") + 
+  scale_fill_viridis(name = "Elevation")) + 
   coord_sf(crs = raster::crs(clipped_raster)) + # Ensure correct coordinate system for plotting
   labs(title = "Elevation within Area of Interest",
        x = "Longitude",
@@ -471,7 +471,7 @@ ggplot() +
 #### Adding sampling points ####
 ################################
 # load sampling and PT sites
-pt <- read.csv("data/NM_PT.csv")
+pt <- read.csv("data/NM_scans.csv", header = TRUE)
 #transform PT lat lon to geometries
 PT <- st_as_sf(pt, coords = c("Lon", "Lat"), crs = '+proj=longlat +datum=WGS84 +no_defs')
 PT_reprojected <- sf::st_transform(PT, crs = raster::crs(clipped_raster))
@@ -482,19 +482,19 @@ streams <- st_read("areas_NM/USF12/area_stream_network.shp")
 #transform streams lat lon to geometries
 stream_reprojected <- sf::st_transform(streams, crs = raster::crs(clipped_raster))
 pt_crs <- sf::st_crs(stream_reprojected)
-
-ggplot() +
-  geom_raster(data = as.data.frame(raster::rasterToPoints(clipped_raster)),
-              aes(x = x, y = y, fill = SFWmuniDEM_meters)) +
-  scale_fill_viridis(name = "Elevation") +
-  geom_sf(data = USF12, fill = NA, color = "black", linewidth = 0.5) +  # plot shapefile *after* raster
-  coord_sf(crs = raster::crs(clipped_raster)) +
-  labs(title = "Elevation in Santa Fe Watershed",
-       x = "Longitude",
-       y = "Latitude") +
-  geom_sf(data = stream_reprojected, color = "#5586B3") +
-  geom_sf(data = PT_reprojected, size = 4, shape = 21, fill = "gray") +
-  theme_minimal()
+#
+# ggplot() +
+#   geom_raster(data = as.data.frame(raster::rasterToPoints(clipped_raster)),
+#               aes(x = x, y = y, fill = SFWmuniDEM_meters)) +
+#   scale_fill_viridis(name = "Elevation") +
+#   geom_sf(data = USF12, fill = NA, color = "black", linewidth = 0.5) +  # plot shapefile *after* raster
+#   coord_sf(crs = raster::crs(clipped_raster)) +
+#   labs(title = "Elevation in Santa Fe Watershed",
+#        x = "Longitude",
+#        y = "Latitude") +
+#   geom_sf(data = stream_reprojected, color = "#5586B3") +
+#   geom_sf(data = PT_reprojected, size = 4, shape = 21, fill = "gray") +
+#   theme_minimal()
 
 # trouble shooting when different projections or extent of areas
 sf::st_crs(PT_reprojected)
@@ -526,7 +526,7 @@ ggplot() +
   # Raster layer
   geom_raster(data = as.data.frame(raster::rasterToPoints(clipped_raster)),
               aes(x = x, y = y, fill = SFWmuniDEM_meters)) +
-  scale_fill_viridis(name = "Elevation") +
+  scale_fill_viridis(name = "Elevation", direction = -1) +
   # Shapefile boundary
   geom_sf(data = USF12, fill = NA, color = "black", linewidth = 0.5) +
   # Stream lines
