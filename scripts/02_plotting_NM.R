@@ -26,8 +26,8 @@ library(raster)
 # create an empty list to store the shape files
 areas_list <- list()
 
-# loop through folders 1 to 29
-for (i in 1:29) {
+# loop through folders 1 to 33
+for (i in 1:33) {
   folder_path <- paste0("areas_NM/USF", i, "/area.shp")
   
   # check if the shape file exists in the folder before loading
@@ -37,7 +37,7 @@ for (i in 1:29) {
 }
 
 # create a vector of folder names (site numbers)
-folder_names <- sprintf("%02d", 1:29)  # Generates "01" to "29"
+folder_names <- sprintf("%02d", 1:33)  # Generates "01" to "33"
 
 # add an Area_ID column to each shapefile in the list
 for (i in seq_along(areas_list)) {
@@ -62,6 +62,7 @@ all_areas <- all_areas %>%
 all_areas <- all_areas %>%
   mutate(Latitude = st_coordinates(Centroid)[, 2],
          Longitude = st_coordinates(Centroid)[, 1])
+
 
 # calculate area sizes and add a new column
 all_areas$Size <- st_area(all_areas)
@@ -119,9 +120,9 @@ crs_all_areas <- st_crs(all_areas)
 NMsites <- sites %>%
   filter(Code == "NM")
 
-# remove some sites that we don't want
-NMsites <- NMsites %>%
-  filter(Site != "USF31")
+# # remove some sites that we don't want
+# NMsites <- NMsites %>%
+#   filter(Site != "USF31")
 
 # convert NMsites to an sf object
 NMsites_sf <- st_as_sf(NMsites, coords = c("Lon", "Lat"), crs = 4326)  # assuming Lon/Lat are in WGS84
@@ -398,34 +399,34 @@ ggplot() +
   geom_sf(data = city_sf, size = 6, color = "#367bb4ff") +
   theme_minimal()
 
-# coordinates
-raster_crs <- raster::crs(elevation_raster)
-shapefile_crs <- sf::st_crs(NM)
-
-# clip the raster to the extent of the NM shapefile
-clipped_raster <- raster::crop(elevation_raster, NM)
-clipped_raster <- raster::mask(clipped_raster, NM)
-
-# if they are different, choose one CRS and reproject:
-# for example, to re project NM to the raster's CRS:
-NM_reprojected <- sf::st_transform(NM, crs = raster::crs(elevation_raster))
-clipped_raster <- raster::crop(elevation_raster, NM_reprojected)
-
-# try again. clip the raster to the extent of the NM shapefile
-clipped_raster <- raster::crop(elevation_raster, NM_reprojected)
-clipped_raster <- raster::mask(clipped_raster, NM_reprojected)
-
-# plot the clipped raster with the shape file boundary
-ggplot() +
-  geom_sf(data = NM, fill = NA, color = "black", linewidth = 1) +
-  geom_raster(data = as.data.frame(raster::rasterToPoints(clipped_raster)),
-              aes(x = x, y = y, fill = SFWmuniDEM_meters)) +
-  scale_fill_viridis(name = "Elevation")) + 
-  coord_sf(crs = raster::crs(clipped_raster)) + # Ensure correct coordinate system for plotting
-  labs(title = "Elevation within Area of Interest",
-       x = "Longitude",
-       y = "Latitude") +
-  theme_minimal()
+# # coordinates
+# raster_crs <- raster::crs(elevation_raster)
+# shapefile_crs <- sf::st_crs(NM)
+# 
+# # clip the raster to the extent of the NM shapefile
+# clipped_raster <- raster::crop(elevation_raster, NM)
+# clipped_raster <- raster::mask(clipped_raster, NM)
+# 
+# # if they are different, choose one CRS and reproject:
+# # for example, to re project NM to the raster's CRS:
+# NM_reprojected <- sf::st_transform(NM, crs = raster::crs(elevation_raster))
+# clipped_raster <- raster::crop(elevation_raster, NM_reprojected)
+# 
+# # try again. clip the raster to the extent of the NM shapefile
+# clipped_raster <- raster::crop(elevation_raster, NM_reprojected)
+# clipped_raster <- raster::mask(clipped_raster, NM_reprojected)
+# 
+# # plot the clipped raster with the shape file boundary
+# ggplot() +
+#   geom_sf(data = NM, fill = NA, color = "black", linewidth = 1) +
+#   geom_raster(data = as.data.frame(raster::rasterToPoints(clipped_raster)),
+#               aes(x = x, y = y, fill = SFWmuniDEM_meters)) +
+#   scale_fill_viridis(name = "Elevation")) + 
+#   coord_sf(crs = raster::crs(clipped_raster)) + # Ensure correct coordinate system for plotting
+#   labs(title = "Elevation within Area of Interest",
+#        x = "Longitude",
+#        y = "Latitude") +
+#   theme_minimal()
 
 #############################
 #### plot just for USF12 ####
@@ -436,32 +437,32 @@ elevation_raster <- try(raster::raster("elevation_nm/SFWmuniDEM_meters.tif"), si
 
 # just USF12
 USF12 <- all_areas %>%
-  filter(Area_ID == "12")
+  filter(Area_ID == "30")
 
-# coordinates
-raster_crs <- raster::crs(elevation_raster)
-shapefile_crs <- sf::st_crs(USF12)
-
-# clip the raster to the extent of the watershed shape file
-clipped_raster <- raster::crop(elevation_raster, USF12)
-clipped_raster <- raster::mask(clipped_raster, USF12)
-
-# if they are different, choose one CRS and reproject:
-# for example, to re project USF12 to the raster's CRS:
-USF12_reprojected <- sf::st_transform(USF12, crs = raster::crs(elevation_raster))
-clipped_raster <- raster::crop(elevation_raster, USF12_reprojected)
-
-# clip the raster to the extent of the watershed shape file
-clipped_raster <- raster::crop(elevation_raster, USF12_reprojected)
-clipped_raster <- raster::mask(clipped_raster, USF12_reprojected)
+# # coordinates
+# raster_crs <- raster::crs(elevation_raster)
+# shapefile_crs <- sf::st_crs(USF12)
+# 
+# # clip the raster to the extent of the watershed shape file
+# clipped_raster <- raster::crop(elevation_raster, USF12)
+# clipped_raster <- raster::mask(clipped_raster, USF12)
+# 
+# # if they are different, choose one CRS and reproject:
+# # for example, to re project USF12 to the raster's CRS:
+# USF12_reprojected <- sf::st_transform(USF12, crs = raster::crs(elevation_raster))
+# clipped_raster <- raster::crop(elevation_raster, USF12_reprojected)
+# 
+# # clip the raster to the extent of the watershed shape file
+# clipped_raster <- raster::crop(elevation_raster, USF12_reprojected)
+# clipped_raster <- raster::mask(clipped_raster, USF12_reprojected)
 
 # plot the clipped raster with the shape file boundary
 ggplot() +
   geom_sf(data = USF12, fill = NA, color = "black", linewidth = 1) +
-  geom_raster(data = as.data.frame(raster::rasterToPoints(clipped_raster)),
-              aes(x = x, y = y, fill = SFWmuniDEM_meters)) +
+  #geom_raster(data = as.data.frame(raster::rasterToPoints(clipped_raster)),
+   #           aes(x = x, y = y, fill = SFWmuniDEM_meters)) +
   scale_fill_viridis(name = "Elevation") + 
-  coord_sf(crs = raster::crs(clipped_raster)) + # ensure correct coordinate system for plotting
+  #coord_sf(crs = raster::crs(clipped_raster)) + # ensure correct coordinate system for plotting
   labs(title = "Elevation in Santa Fe Watershed",
        x = "Longitude",
        y = "Latitude") +

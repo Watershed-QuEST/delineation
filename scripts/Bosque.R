@@ -11,6 +11,8 @@ library(sf)
 library(ggplot2)
 library(paletteer) # for color palettes
 library(mapview)
+library(basemaps)
+library(ggnewscale) 
 
 ###############################
 #### SLO and VDO locations ####
@@ -83,9 +85,8 @@ library(sf)
 library(ggplot2)
 library(paletteer)
 library(mapview)
-library(ggnewscale) # Load this new package!
 
-install.packages("ggnewscale")
+
 ###############################
 #### SLO and VDO locations ####
 ###############################
@@ -141,7 +142,6 @@ dem_df <- as.data.frame(dem_cropped, xy = TRUE)
 ############################################
 #### Plot all sites with dem and stream ####
 ############################################
-
 ggplot() +
   # 1. Add the cropped DEM (elevation data) using geom_raster
   geom_raster(data = dem_df, aes(x = x, y = y, fill = dem_newmex)) + # Map fill to elevation
@@ -172,3 +172,35 @@ ggplot() +
   labs(title = "SLO and VDO Locations with Elevation and Streams") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
+
+#####################################
+#### Using basmap layers instead ####
+#####################################
+api_key <- "7b6db65ee9644fcf8f333afd6b91caf9"
+data(ext)
+# set defaults for the basemap
+set_defaults(map_service = "osm", map_type = "landscape")
+
+
+# Assuming 'bosque' is an sf object or can be converted to one
+# If you know the original CRS (e.g., EPSG:4326 for WGS84 lat/long)
+bosque_sf <- st_as_sf(BSQ, coords = c("longitude", "latitude"), crs = 4326)
+
+# Then transform it to Web Mercator
+bosque_transformed <- st_transform(bosque_sf, crs = 3857)
+
+# Now plot with the transformed data
+ggplot() +
+  basemap_gglayer(ext) + # Or use your transformed bounding box/extent
+  geom_sf(data = bosque_transformed, aes(...)) + # Plot your points
+  scale_fill_identity() +
+  coord_sf()
+
+Sys.getenv("http_proxy")
+Sys.getenv("https_proxy")
+
+Sys.unsetenv("http_proxy")
+Sys.unsetenv("https_proxy")
+
+install.packages("basemap", dependencies = TRUE)
+install.packages("curl", dependencies = TRUE) # curl is used for network requests

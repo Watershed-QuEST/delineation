@@ -55,7 +55,7 @@ pour # check dataset
 #convert Spatial Points to sf (simple features)
 pour_sf = st_as_sf(pour) 
 #use the sf object in get_elev_raster
-dem = get_elev_raster(pour_sf, z = 12, clip = "bbox", expand = 5000) # if area getting cut play around with expand number
+dem = get_elev_raster(pour_sf, z = 12, clip = "bbox", expand = 12000) # if area getting cut play around with expand number
 res(dem) # resolution in meters
 
 #### if det_elev_raster says: Please connect to the internet and try again ####
