@@ -107,6 +107,10 @@ ggplot() +
 ## load site data
 sites <- drive_get("https://docs.google.com/spreadsheets/d/1j5p29rslgqH6VpyjcZJ0-qPUaECY-9VW4YKDWdc_sro/edit?gid=0#gid=0")
 3
+
+# Just upper
+streams <- st_read("areas_NM/USF21/area_stream_network.shp")
+sites <- drive_get("https://docs.google.com/spreadsheets/d/1B-Knv9rqL39NkwNkAN8Daj5VExInI1voRo-w70iciAU/edit?gid=0#gid=0")
 # download the file as a csv file
 drive_download(as_id(sites$id), path = "data/sites.csv", type = "csv", overwrite = T)
 # fetch the file
@@ -133,12 +137,13 @@ NMsites_sf <- cbind(NMsites_sf, st_coordinates(NMsites_sf))
 
 # plot both datasets with coord_sf()
 ggplot() +
-  geom_sf(data = all_areas, aes(fill = Area_ID), alpha = 0.5) +  # plot polygons with transparency
+  #geom_sf(data = all_areas, aes(fill = Area_ID), alpha = 0.5) +  # plot polygons with transparency
   labs(title = "Santa Fe Watershed", fill = "Area ID") +  # add title and legend label
-  geom_sf(data = NMsites_sf, aes(fill = Site), color = "black", shape = 21, size = 3) +  # plot points from DVsites
-  geom_sf_text(data = NMsites_sf, aes(label = Site), size = 4, vjust = -1, color = "black") +  # add text labels for Site IDs
-  theme_minimal() +
-  theme(legend.position = "right")  # adjust legend position
+  geom_sf(data = streams, color = "blue") +
+  geom_sf(data = NMsites_sf, aes(fill = Site), color = "black", shape = 21, size = 2) +  # plot points from DVsites
+  geom_sf_text(data = NMsites_sf, aes(label = Site), size = 2, vjust = -1, color = "black") +  # add text labels for Site IDs
+  theme_minimal() 
+
 
 ##################
 #### Leverage ####
@@ -437,7 +442,7 @@ elevation_raster <- try(raster::raster("elevation_nm/SFWmuniDEM_meters.tif"), si
 
 # just USF12
 USF12 <- all_areas %>%
-  filter(Area_ID == "30")
+  filter(Area_ID == "12")
 
 # # coordinates
 # raster_crs <- raster::crs(elevation_raster)

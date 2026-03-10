@@ -85,15 +85,20 @@ ggplot() +
 
 
 #### load streams ####
-streams <- st_read("areas_NM/USF12/area_stream_network.shp")
+streams <- st_read("areas_NM/USF1/area_stream_network.shp")
 
 # plot the areas with the streams
 ggplot() +
-  geom_sf(data = all_areas, aes(fill = Area_ID), alpha = 0.5) +  # set transparency for visibility
+  #geom_sf(data = all_areas, aes(fill = Area_ID), alpha = 0.5) +  # set transparency for visibility
   labs(title = "Santa Fe Watershed", fill = "Area ID") +
-  geom_sf(data = streams, color = "blue") +
+  geom_sf(data = streams, color = "#1C86EE", ) +
   theme_minimal() +
-  theme(legend.position = "right")  # adjust legend position as needed
+  theme(axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank()) 
+  #theme(legend.position = "right")  # adjust legend position as needed
 
 ######################
 #### PT locations ####
@@ -114,7 +119,7 @@ ggplot() +
   labs(title = "Santa Fe Watershed - PT locations", fill = "Site") +
   scale_fill_manual(values = pal) +
   geom_sf(data = streams, color = "#5586B3") +
-  geom_sf(data = PT, size = 4, shape = 21, fill = "black") +
+  geom_sf(data = PT, size = 3, shape = 21, fill = "black") +
   theme_minimal()
 
 # can't get to not plot the areas in the legend if you want them with color... sorry
@@ -191,4 +196,66 @@ ggplot() +
   geom_sf(data = PT, aes(fill = Site), size = 4, shape = 21) +
   scale_fill_manual(name = "Site", values = c("USF12" = "#FDE725", "USF20" = "#2B833E", "USF21" = "#440154"), 
                     labels = c("USF12" = "Lower", "USF20" = "Middle", "USF21" = "Upper")) +
+  theme_minimal()
+
+##########################
+#### Will's locations ####
+##########################
+# load leverage data
+pt <- read.csv("data/forwill.csv")
+
+# choose colors for maps. PLAY WITH THIS!
+pal <- paletteer_c("ggthemes::Green-Blue-White Diverging", 30)
+pal <- paletteer_c("ggthemes::Green", 43)
+
+# transform lat lon to geometries
+PT <- st_as_sf(pt, coords = c("Lon", "Lat"), crs = '+proj=longlat +datum=WGS84 +no_defs')
+
+# plot all sites
+library(ggspatial)
+
+ggplot() +
+  # 1. Background
+  geom_sf(data = all_areas, fill = "#4DAF4A", color = NA, alpha = 0.2) +
+  
+  # 2. USF12 in Green (Eco Green: #4DAF4A)
+  geom_sf(data = all_areas %>% filter(Area_ID == "USF12"), 
+          fill = "#4DAF4A", color = "black", linewidth = 0.7) +
+  
+  geom_sf(data = streams, color = "#5586B3") +
+  geom_sf(data = PT, size = 2, shape = 21, fill = "black") +
+  
+  # 3. Add Scale Bar
+  # 'location' options: "tl", "tr", "bl", "br" (top-left, bottom-right, etc.)
+  annotation_scale(location = "br", width_hint = 0.4) +
+  
+  # 4. Add North Arrow (Optional but recommended)
+  annotation_north_arrow(location = "tl", which_north = "true", 
+                         pad_x = unit(0.2, "in"), pad_y = unit(0.4, "in"),
+                         style = north_arrow_fancy_orienteering) +
+  
+  theme_minimal() +
+  theme(panel.grid = element_blank(), 
+        axis.text = element_blank(),
+        axis.title = element_blank()) +
+  coord_sf(datum = NA)
+
+# can't get to not plot the areas in the legend if you want them with color... sorry
+ggplot() +
+  # plot all areas but not in the legend
+  geom_sf(data = all_areas, alpha = 0.3, show.legend = FALSE) +
+  
+  # plot PT sites and set fill to Site to generate the legend entry
+  geom_sf(data = PT, aes(fill = Site), size = 2.5, shape = 21, show.legend = TRUE) +
+  
+  # add streams to the map
+  geom_sf(data = streams, color = "#5586B3") +
+  
+  # customize the legend and title
+  labs(title = "Santa Fe Watershed - PT Locations", fill = "PT Sites") +
+  
+  # set color palette for PT site names
+  scale_fill_manual(values = pal) +
+  
+  # minimal theme
   theme_minimal()

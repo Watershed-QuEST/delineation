@@ -22,7 +22,7 @@ library(tmaptools)
 library(googledrive)
 
 ###################
-#### Load data ####
+#### Load data ####  
 ###################
 #this is a csv file with at least the site name and lat long info for that site
 outlet = read_csv("data/outlet.csv")
@@ -55,8 +55,9 @@ pour # check dataset
 #convert Spatial Points to sf (simple features)
 pour_sf = st_as_sf(pour) 
 #use the sf object in get_elev_raster
-dem = get_elev_raster(pour_sf, z = 12, clip = "bbox", expand = 12000) # if area getting cut play around with expand number
+dem = get_elev_raster(pour_sf, z = 11, clip = "bbox", expand = 17000) # if area getting cut play around with expand number
 res(dem) # resolution in meters
+
 
 #### if det_elev_raster says: Please connect to the internet and try again ####
 # curl::has_internet()
@@ -162,7 +163,7 @@ streams <- raster("temp/flowaccum_newmex.tif") #flow accumulation, indicating th
 wbt_extract_streams(
   flow_accum = "temp/flowaccum_newmex.tif",
   output = "temp/streams_newmex.tif",
-  threshold = 50,
+  threshold = 50, # specifies the number of cells that contribute flow to each cell in the landscape. If small streams aren't showing up, lower this number!
   wd = temp
 )
 
@@ -303,6 +304,5 @@ sum(st_area(newmex_ws))
 flowdir = raster('temp/flowdir_newmex.tif')
 plot(flowdir) + plot(streams)
 mapview(flowdir)+mapview(streams)+mapview(pour_sf)+mapview(newmex_ws)
-
 
 

@@ -18,6 +18,9 @@ folder_names <- c("USF1", "USF2", "USF3", "USF4", "USF5", "USF6", "USF7", "USF8"
                   "USF11", "USF12", "USF13", "USF14", "USF15", "USF16", "USF17", "USF18", "USF19", 
                   "USF20", "USF21", "USF22", "USF23", "USF24", "USF25", "USF26", "USF27", "USF28", "USF29")
 
+# List of folder names
+folder_names <- c("USF40", "USF41", "USF4", "USF2")
+  
 # Create an empty list to store the shapefiles
 areas_list <- list()
 
