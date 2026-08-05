@@ -142,6 +142,54 @@ ggplot() +
   # minimal theme
   theme_minimal()
 
+library(dplyr)
+
+########################################################
+#### PT locations grouped by upper middle and lower ####
+########################################################
+# Create the grouping column
+PT <- PT %>%
+  mutate(location = case_when(
+    Site %in% c("USF03", "USF04", "USF05", "USF01", "USF02", "USF12", "USF24", "USF25", "USF26") ~ "lower",
+    Site %in% c("USF09", "USF10", "USF11", "USF32", "USF33", "USF22", "USF23", "USF07", "USF20") ~ "middle",
+    Site %in% c("USF21", "USF14", "USF13", "USF31", "USF15", "USF16", "USF17", "USF18", "USF28", "USF29", "USF19") ~ "upper",
+    TRUE ~ NA_character_
+  ))
+
+ggplot() +
+  # 1. Plot ONLY the specific watershed boundary
+  geom_sf(data = all_areas %>% filter(Area_ID == "12"),
+          fill = "gray90",       # Light gray fill
+          color = "gray50",      # Boundary color
+          linewidth = 0.5) +
+  
+  # 2. Plot streams
+  geom_sf(data = streams, 
+          color = "#5586B3", 
+          linewidth = 0.3) +
+  
+  # 3. Plot PT sites
+  geom_sf(data = PT, 
+          aes(fill = location), 
+          size = 3, 
+          shape = 21, 
+          color = "black") +
+  
+  # Colors for groups
+  scale_fill_manual(values = c("upper" = "blue", 
+                               "middle" = "green", 
+                               "lower" = "red")) +
+  
+  # Styling
+  labs(title = "Santa Fe Watershed", fill = "Location") +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(), 
+    axis.text = element_blank(),
+    axis.title = element_blank()
+  ) +
+  coord_sf(datum = NA)
+
 ########################
 #### Scan locations ####
 ########################
@@ -214,16 +262,19 @@ PT <- st_as_sf(pt, coords = c("Lon", "Lat"), crs = '+proj=longlat +datum=WGS84 +
 # plot all sites
 library(ggspatial)
 
+usf12 <- PT[5,]
+
 ggplot() +
   # 1. Background
-  geom_sf(data = all_areas, fill = "#4DAF4A", color = NA, alpha = 0.2) +
+  geom_sf(data = all_areas, color = NA, alpha = 0.2) +
   
   # 2. USF12 in Green (Eco Green: #4DAF4A)
   geom_sf(data = all_areas %>% filter(Area_ID == "USF12"), 
           fill = "#4DAF4A", color = "black", linewidth = 0.7) +
   
   geom_sf(data = streams, color = "#5586B3") +
-  geom_sf(data = PT, size = 2, shape = 21, fill = "black") +
+  #geom_sf(data = PT, size = 2, shape = 21, fill = "black") +
+  geom_sf(data = usf12, size = 2, shape = 21, fill = "black") +
   
   # 3. Add Scale Bar
   # 'location' options: "tl", "tr", "bl", "br" (top-left, bottom-right, etc.)
@@ -255,7 +306,9 @@ ggplot() +
   labs(title = "Santa Fe Watershed - PT Locations", fill = "PT Sites") +
   
   # set color palette for PT site names
-  scale_fill_manual(values = pal) +
+  # scale_fill_manual(values = pal) +
   
   # minimal theme
   theme_minimal()
+
+
