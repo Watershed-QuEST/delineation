@@ -12,7 +12,18 @@ library(rgdal) # For KML/KMZ support
 #########################
 #### Load your areas ####
 #########################
+### BR -------------------------------------------------------------------------
+# List of folder names
+folder_names <- c("BRM01", "BRMQ1", "BRAA1", "BRA01", "BRM02", "BRAB1", "BRB01", "BRM03", 
+                  "BRMQ3", "BRM04", "BRCD1", "BRMQ4", "BRD01", "BRE01", "BRM05", "BRF01",
+                  "BRM06", "BRM07", "BRC01", "BRA02")
 
+### DV -------------------------------------------------------------------------
+folder_names <- c("DVO", "DVSB1", "DVSB2", "DVMS1", "DVMS2", "DVMS3", "DVMS4", 
+                  "DVMS5", "DVMS6", "DVET", "DVNWT1", "DVNWT2", "DVNWT3", 
+                  "DVNWT4", "DVNWT5", "DVWT1", "DVWT2", "DVWT3", "DVWT4", "DVWT5")
+
+### NM -------------------------------------------------------------------------
 # List of folder names
 folder_names <- c("USF1", "USF2", "USF3", "USF4", "USF5", "USF6", "USF7", "USF8", "USF9", "USF10", 
                   "USF11", "USF12", "USF13", "USF14", "USF15", "USF16", "USF17", "USF18", "USF19", 
@@ -20,13 +31,26 @@ folder_names <- c("USF1", "USF2", "USF3", "USF4", "USF5", "USF6", "USF7", "USF8"
 
 # List of folder names
 folder_names <- c("USF40", "USF41", "USF4", "USF2")
-  
+
+### NH -------------------------------------------------------------------------
+# List of folder names
+folder_names <- c("LMP00", "DCR", "OMC", "LMP01", "SMB", "CTB", "LMP07", "LMP09", "PRC",
+                  "LST01", "NCB", "NCB-down", "LMP12", "HRB", "LMP19", "NBR-up", "NBR", "DDB", "LMP27")
+
+### SS -------------------------------------------------------------------------
+# List of folder names
+folder_names <- c("SSM01", "SST02", "SST03", "SST04", "SST05", "SST06", "SST07", 
+                  "SST08", "SST09", "SSM10", "SST11", "SST12", "SST13", "SST14", 
+                  "SST15", "SST16", "SST17", "SST18", "SST19", "SSM20", "SSMFN")
+
+
 # Create an empty list to store the shapefiles
 areas_list <- list()
 
 # Loop through each folder name in the list
 for (folder in folder_names) {
-  # Construct the file path
+  # Construct the file path 
+  #### change for areas_BR, areas_DV, areas_NH, areas_NM, areas_SS 
   folder_path <- paste0("areas_NM/", folder, "/area.shp")
   
   # Check if the shapefile exists in the folder before loading
@@ -48,6 +72,7 @@ all_areas <- do.call(rbind, areas_list)
 
 #### THIS WILL SAVE THE KMLS TO YOUR FILES SO SPECIFY WHERE YOU WANT THEM ####
 # Specify the directory where you want to save the KML files
+ ## Change output dir according to the catchment you are working on ##
 output_dir <- "SantaFe_basins/KML"
 
 # Create an empty list to store KML areas
